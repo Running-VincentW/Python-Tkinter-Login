@@ -2,10 +2,14 @@ from tkinter import *
 from tkinter import messagebox
 from database import db
 from client import client
+from pprint import *
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+
 class mainUI(Frame):
     def logout(self):
         self.controller.user = client(-1)
@@ -18,12 +22,20 @@ class mainUI(Frame):
         Button (self, text="Logout", command=self.logout).grid(row=1,column=1,sticky='NE')
         self.content = StringVar()
         Label (self,textvariable = self.content).grid(row=2,column=0,columnspan=2,sticky='NSEW')
+        
+        self.columnconfigure(0, weight = 1)
+        self.columnconfigure(1, weight = 1)
+
+    def refresh(self):
         #add graph to column three
         f = Figure(figsize = (5,5), dpi = 100)
         a = f.add_subplot(111)
-        b = f.add_subplot(111)
-        a.plot([1,2,3,4,5,6,7,8])
-        b.plot([2,4,6,8,10,12,14,16])
+        plot = db.user_sales_timeline(self.controller.user.user_id)
+        a.plot(plot[0],plot[1])
+        f.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d/%Y'))
+        f.gca().xaxis.set_major_locator(mdates.DayLocator())
+        f.autofmt_xdate()
+        
         #bring up the canvas
         canvas = FigureCanvasTkAgg(f,self)
         canvas.show()
@@ -31,18 +43,25 @@ class mainUI(Frame):
         #navigation toolbar
         self.toolbar_frame = Frame(self).grid(row=4, columnspan = 2, sticky = 'NSEW')
         toolbar_frame = Frame(self)
-        toolbar_frame.grid(row=21,column=4,columnspan=2)
+        toolbar_frame.grid(row=4,columnspan = 2, sticky = S+E+W)
         toolbar = NavigationToolbar2TkAgg( canvas, toolbar_frame )
         #toolbar = NavigationToolbar2TkAgg(self, self.toolbar_frame)
         toolbar.update()
         canvas._tkcanvas.grid()
-
-    def refresh(self):
         self.welcome_msg.set("Hello %s!" %self.controller.user.username)
         if(self.controller.user.is_admin):
             self.content.set("You are an admin!")
         else:
             self.content.set("You are a user.")
+        if(self.controller.user.is_admin):
+            pie = db.sales_pie_chart()
+            # Plot
+            plt.pie(pie[1], autopct='%1.1f%%', shadow=True, labels = pie[0])
+            plt.axis('equal')
+            plt.show()
+        
+
+        
         
 class RegisterFrame(Frame):
     def refresh(self):

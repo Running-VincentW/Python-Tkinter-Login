@@ -1,3 +1,4 @@
+import datetime as dt
 import sqlite3
 class db:
     def sql(sql,data):
@@ -20,4 +21,19 @@ class db:
         return
     def getinfo(userid):
         return db.sql("SELECT * FROM `logins` WHERE `userId` = ?",(userid,))
+    def user_sales_timeline(userid): #column 1 = date, column 2 = sales amt
+        result = db.sql("SELECT DATE(SaleDate) AS 'Date', SUM(SaleValue) FROM Sales WHERE User = ? GROUP BY Date ORDER BY Date",(userid,))
+        plot = [[],[]]
+        for c in result:
+            plot[0].append(c[0])
+            plot[1].append(c[1])
+        plot[0] = [dt.datetime.strptime(d,'%Y-%m-%d').date() for d in plot[0]]
+        return plot
+    def sales_pie_chart():
+        result = db.sql("SELECT (SELECT username FROM logins WHERE userId = User), SUM(SaleValue)*100/(SELECT SUM(SaleValue) FROM Sales) FROM Sales GROUP BY User",())
+        plot = [[],[]]
+        for c in result:
+            plot[0].append(c[0])
+            plot[1].append(c[1])
+        return plot
 
