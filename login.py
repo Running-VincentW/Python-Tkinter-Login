@@ -1,6 +1,11 @@
 from tkinter import *
+from tkinter import messagebox
 from database import db
 from client import client
+import matplotlib
+matplotlib.use("TkAgg")
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib.figure import Figure
 class mainUI(Frame):
     def logout(self):
         self.controller.user = client(-1)
@@ -9,14 +14,33 @@ class mainUI(Frame):
         Frame.__init__(self,parent)
         self.controller = controller
         self.welcome_msg = StringVar(parent)
-        Label (self,textvariable = self.welcome_msg).grid(row=1,column=1,sticky='NW')
-        Button (self, text="Logout", command=self.logout).grid(row=1,column=2,sticky='NE')
+        Label (self,textvariable = self.welcome_msg).grid(row=1,column=0,sticky='NW')
+        Button (self, text="Logout", command=self.logout).grid(row=1,column=1,sticky='NE')
         self.content = StringVar()
-        Label (self,textvariable = self.content).grid(row=2,column=1,columnspan=2,sticky='NSEW')
+        Label (self,textvariable = self.content).grid(row=2,column=0,columnspan=2,sticky='NSEW')
+        #add graph to column three
+        f = Figure(figsize = (5,5), dpi = 100)
+        a = f.add_subplot(111)
+        b = f.add_subplot(111)
+        a.plot([1,2,3,4,5,6,7,8])
+        b.plot([2,4,6,8,10,12,14,16])
+        #bring up the canvas
+        canvas = FigureCanvasTkAgg(f,self)
+        canvas.show()
+        canvas.get_tk_widget().grid(row=3,columnspan = 2, sticky = 'NSEW')
+        #navigation toolbar
+        self.toolbar_frame = Frame(self).grid(row=4, columnspan = 2, sticky = 'NSEW')
+        toolbar_frame = Frame(self)
+        toolbar_frame.grid(row=21,column=4,columnspan=2)
+        toolbar = NavigationToolbar2TkAgg( canvas, toolbar_frame )
+        #toolbar = NavigationToolbar2TkAgg(self, self.toolbar_frame)
+        toolbar.update()
+        canvas._tkcanvas.grid()
+
     def refresh(self):
         self.welcome_msg.set("Hello %s!" %self.controller.user.username)
         if(self.controller.user.is_admin):
-            self.content.set("You are a admin!")
+            self.content.set("You are an admin!")
         else:
             self.content.set("You are a user.")
         
