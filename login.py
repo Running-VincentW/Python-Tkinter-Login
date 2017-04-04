@@ -28,6 +28,7 @@ class mainUI(Frame):
 
     def refresh(self):
         #add graph to column three
+        
         f = Figure(figsize = (5,5), dpi = 100)
         a = f.add_subplot(111)
         plot = db.user_sales_timeline(self.controller.user.user_id)
@@ -56,9 +57,15 @@ class mainUI(Frame):
         if(self.controller.user.is_admin):
             pie = db.sales_pie_chart()
             # Plot
-            plt.pie(pie[1], autopct='%1.1f%%', shadow=True, labels = pie[0])
-            plt.axis('equal')
-            plt.show()
+            f = Figure(figsize = (5,5), dpi = 100)
+            a = f.add_subplot(111)
+            a.pie(pie[1], autopct='%1.1f%%', shadow=True, labels = pie[0])
+            a.axis('equal')
+            
+            #plt.show()
+            canvas = FigureCanvasTkAgg(f,self)
+            canvas.show()
+            canvas.get_tk_widget().grid(row=5,columnspan = 2, sticky = 'NSEW')
         
 
         
@@ -151,13 +158,24 @@ class LoginFrame(Frame):
         
         Label(self,textvariable= self.lbl_status).grid(row=4,column=0,columnspan=2,sticky='W')
 class SampleApp(Tk):
+    def onFrameConfigure(self,canvas):
+        canvas.configure(scrollregion=canvas.bbox("all"))
     def __init__(self, *args, **kwargs):
         Tk.__init__(self, *args, **kwargs)
+        canvas = Canvas(self)
         # the container is where we'll stack a bunch of frames
         # on top of each other, then the one we want visible
         # will be raised above the others
         self.user = client(-1)
-        container = Frame(self)
+        container = Frame(canvas)
+        vsb = Scrollbar(self, orient="vertical", command=canvas.yview)
+        canvas.configure(yscrollcommand=vsb.set)
+        vsb.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+        canvas.create_window((4,4), window=container, anchor="nw")
+
+        container.bind("<Configure>", lambda event, canvas=canvas: self.onFrameConfigure(canvas))
+
         container.pack(side="top", fill="both", expand=True)
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
