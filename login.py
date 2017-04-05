@@ -22,9 +22,6 @@ class mainUI(Frame):
         Button (self, text="Logout", command=self.logout).grid(row=1,column=1,sticky='NE')
         self.content = StringVar()
         Label (self,textvariable = self.content).grid(row=2,column=0,columnspan=2,sticky='NSEW')
-        
-        self.columnconfigure(0, weight = 1)
-        self.columnconfigure(1, weight = 1)
 
     def refresh(self):
         #add graph to column three
@@ -50,6 +47,9 @@ class mainUI(Frame):
         toolbar.update()
         canvas._tkcanvas.grid()
         self.welcome_msg.set("Hello %s!" %self.controller.user.username)
+
+        self.columnconfigure(0, weight = 1)
+        self.columnconfigure(1, weight = 1)
         if(self.controller.user.is_admin):
             self.content.set("You are an admin!")
         else:
@@ -160,23 +160,26 @@ class LoginFrame(Frame):
 class SampleApp(Tk):
     def onFrameConfigure(self,canvas):
         canvas.configure(scrollregion=canvas.bbox("all"))
+    def FrameWidth(self, event):
+        canvas_width = event.width
+        self.canvas.itemconfig(self.canvas_frame, width = canvas_width)
     def __init__(self, *args, **kwargs):
         Tk.__init__(self, *args, **kwargs)
-        canvas = Canvas(self)
+        self.canvas = Canvas(self, borderwidth=0, background="#ffffff")
         # the container is where we'll stack a bunch of frames
         # on top of each other, then the one we want visible
         # will be raised above the others
         self.user = client(-1)
-        container = Frame(canvas)
-        vsb = Scrollbar(self, orient="vertical", command=canvas.yview)
-        canvas.configure(yscrollcommand=vsb.set)
+        container = Frame(self.canvas)
+        vsb = Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=vsb.set)
         vsb.pack(side="right", fill="y")
-        canvas.pack(side="left", fill="both", expand=True)
-        canvas.create_window((4,4), window=container, anchor="nw")
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.canvas_frame = self.canvas.create_window((4,4), window=container, anchor="nw")
 
-        container.bind("<Configure>", lambda event, canvas=canvas: self.onFrameConfigure(canvas))
+        container.bind("<Configure>", lambda event, canvas=self.canvas: self.onFrameConfigure(canvas))
+        self.canvas.bind('<Configure>', self.FrameWidth)
 
-        container.pack(side="top", fill="both", expand=True)
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
 
@@ -199,6 +202,7 @@ class SampleApp(Tk):
             frame.refresh()
         except AttributeError:
             pass
+        #create canvas 
         frame.tkraise()
 
 class Login(Tk):
